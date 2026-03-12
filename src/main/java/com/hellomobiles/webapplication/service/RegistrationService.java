@@ -8,6 +8,7 @@ import com.hellomobiles.webapplication.repository.EmailOtpRepository;
 import com.hellomobiles.webapplication.repository.UserRepository;
 import com.hellomobiles.webapplication.util.OtpUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,18 +25,32 @@ public class RegistrationService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     public String register(RegistrationRequest request) {
+
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new RuntimeException("Passwords do not match");
+        }
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email already registered");
         }
 
+        // Create user
         User user = new User();
-        user.setName(request.getName());
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setVerified(false);
+        user.setAuthProvider("LOCAL");
+
         userRepository.save(user);
 
+        // Generate OTP
         String otp = OtpUtil.generateOtp();
 
         EmailOtp emailOtp = new EmailOtp();
@@ -43,8 +58,10 @@ public class RegistrationService {
         emailOtp.setOtp(otp);
         emailOtp.setExpiryTime(LocalDateTime.now().plusMinutes(5));
         emailOtp.setUsed(false);
+
         emailOtpRepository.save(emailOtp);
 
+        // Send OTP
         emailService.sendOtp(request.getEmail(), otp);
 
         return "OTP sent successfully";
