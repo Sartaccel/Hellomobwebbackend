@@ -1,7 +1,6 @@
 package com.hellomobiles.webapplication.controller;
 
 import com.hellomobiles.webapplication.dto.LoginRequest;
-import com.hellomobiles.webapplication.dto.LoginResponse;
 import com.hellomobiles.webapplication.dto.RegistrationRequest;
 import com.hellomobiles.webapplication.dto.VerifyOtpRequest;
 import com.hellomobiles.webapplication.service.LoginService;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
+@CrossOrigin(origins = "*")
 public class AuthController {
 
     private final RegistrationService registrationService;
@@ -34,7 +34,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(loginService.login(request));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@Valid @RequestBody com.hellomobiles.webapplication.dto.GoogleLoginRequest request) {
+        return ResponseEntity.ok(loginService.googleLogin(request));
     }
 }
